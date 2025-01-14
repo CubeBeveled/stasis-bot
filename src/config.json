@@ -1,0 +1,83 @@
+{
+  "general": {
+    "afkMovement": false,
+    "autoJump": true,
+    "autoEatHealth": true,
+    "autoEatHealthThreshold": 15
+  },
+  "commands": {
+    "cmdPrefix": ":",
+    "sprintJumpDistance": 5,
+    "follow": {
+      "distance": 2
+    },
+    "attack": {
+      "reach": 3.5,
+      "followDistance": 3,
+      "rotateOnBreak": true,
+      "rotateOnPlace": true,
+      "crystalBlastRadius": 5,
+      "crystalPlaceRadius": 2.5,
+      "jumpDuration": 400
+    },
+    "stasis": {
+      "radius": 5
+    },
+    "whitelist": [
+      "ur_freind1348",
+      "dear_grandma",
+      "the_doggo15"
+    ],
+    "whiterList": [
+      "yourusername"
+    ],
+    "specialBlockRadius": 30,
+    "specialBlockName": "diamond_block"
+  },
+  "bots": [
+    {
+      "username": "username",
+      "host": "6b6t.org",
+      "is6b6t": true,
+      "version": "1.20",
+      "password": "teehee",
+      "viewDistance": "normal",
+      "reconnectDelay": 10000,
+      "checkTimeoutInterval": 35000
+    }
+  ],
+  "cooldowns": {
+    "wooden_sword": 0.625,
+    "golden_sword": 0.625,
+    "stone_sword": 0.625,
+    "iron_sword": 0.625,
+    "diamond_sword": 0.625,
+    "netherite_sword": 0.625,
+    "trident": 1.1,
+    "wooden_shovel": 1.0,
+    "golden_shovel": 1.0,
+    "stone_shovel": 1.0,
+    "iron_shovel": 1.0,
+    "diamond_shovel": 1.0,
+    "netherite_shovel": 1.0,
+    "wooden_pickaxe": 1.2,
+    "golden_pickaxe": 1.2,
+    "stone_pickaxe": 1.2,
+    "iron_pickaxe": 1.2,
+    "diamond_pickaxe": 1.2,
+    "netherite_pickaxe": 1.2,
+    "wooden_axe": 0.8,
+    "golden_axe": 1.0,
+    "stone_axe": 0.8,
+    "iron_axe": 0.9,
+    "diamond_axe": 1.0,
+    "netherite_axe": 1.0,
+    "wooden_hoe": 1.0,
+    "golden_hoe": 1.0,
+    "stone_hoe": 2.0,
+    "iron_hoe": 3.0,
+    "diamond_hoe": 4.0,
+    "netherite_hoe": 4.0,
+    "other": 1.0
+  }
+}
