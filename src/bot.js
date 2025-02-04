@@ -187,7 +187,7 @@ class stasisBot {
       const ansi = msg.toAnsi();
       msg = msg.toString();
 
-      if (!msg.includes("»")) {
+      if (!msg.includes("»") && !msg.startsWith("<")) {
         if (msg.includes("login")) {
           this.bot.chat(`/login ${this.mcOptions.password}`)
         }
