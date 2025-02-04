@@ -40,6 +40,7 @@ class stasisBot {
     this.spawned = 0;
     this.dead = true;
     this.hasBed = true;
+    this.afkMove = true;
 
     if (fs.existsSync("homes.json")) this.homes = require("./homes.json")
     else {
@@ -129,8 +130,7 @@ class stasisBot {
 
       if (this.spawned == 2) {
         this.status = online;
-        this.bot.setControlState("forward", false);
-        this.slowLoop();
+        if (this.mcOptions.is6b6t) this.bot.setControlState("forward", false);
 
         if (this.config.general.afkMovement) {
           this.randomMovement()
@@ -159,9 +159,10 @@ class stasisBot {
     });
 
     this.bot.on("blockUpdate", async (oldBlock, newBlock) => {
+      this.afkMove = false;
       if (!this.hasBed && this.bot.entity && this.bot.isABed(newBlock) && this.bot.entity.position.distanceTo(newBlock.position) <= 5) {
-        this.bot.lookAt(newBlock.position, true)
-        this.bot.activateBlock(newBlock)
+        this.bot.lookAt(newBlock.position, true);
+        this.bot.activateBlock(newBlock);
         await sleep(500);
 
         try {
@@ -179,6 +180,7 @@ class stasisBot {
       } else if (this.bot.isABed(oldBlock) && !this.bot.isABed(newBlock)) {
         this.hasBed = false;
       }
+      this.afkMove = true;
     });
 
     this.bot.on("message", async (msg) => {
@@ -276,38 +278,6 @@ class stasisBot {
       if (msg.startsWith(this.config.commands.cmdPrefix)) this.cmdHandler(username, msg)
     });
 
-    this.bot.on("playerCollect", async (collector, collected) => {
-      await sleep(100);
-      const collectedItem = collected.getDroppedItem();
-
-      if (collector.username == this.mcOptions.username && collectedItem) {
-
-        if (collectedItem.name.includes("helmet")) {
-          const helmet = this.bot.inventory.items().find(item => item.name.endsWith("helmet"));
-          this.bot.equip(helmet, "head");
-
-        } else if (collectedItem.name.includes("chestplate")) {
-          const chestplate = this.bot.inventory.items().find(item => item.name.endsWith("chestplate"));
-          this.bot.equip(chestplate, "torso");
-
-        } else if (collectedItem.name.includes("legging")) {
-          const leggings = this.bot.inventory.items().find(item => item.name.endsWith("leggings"));
-          this.bot.equip(leggings, "legs");
-
-        } else if (collectedItem.name.includes("boots")) {
-          const boots = this.bot.inventory.items().find(item => item.name.endsWith("boots"));
-          this.bot.equip(boots, "feet");
-        }
-
-        const totem = this.bot.inventory.items().find(item => item.name.startsWith("totem"));
-        const offhandItem = this.bot.inventory.slots[this.bot.getEquipmentDestSlot("off-hand")];
-
-        if (collectedItem.name.startsWith("totem") && (!offhandItem || (offhandItem && !offhandItem.name.startsWith("totem"))))
-          this.bot.equip(totem, "off-hand")
-            .catch(err => console.error(color.red("Failed to equip totem:"), err.message));
-      }
-    });
-
     this.bot.on("physicsTick", () => {
       if (this.dead || !this.bot || this.status !== online) return;
 
@@ -324,43 +294,8 @@ class stasisBot {
     });
   }
 
-  async slowLoop() {
-    if (!this.status == online) {
-      return;
-    } else if (this.dead || !this.bot) {
-      await sleep(5)
-      this.slowLoop()
-      return;
-    }
-
-    const mob = this.bot.nearestEntity(entity => !entity.type == "player" && entity.isValid)
-
-    if (mob) {
-      const distance = this.bot.entity.position.distanceTo(mob.position);
-      const sword = this.bot.inventory.items().find(item => item.name.toLowerCase().includes("sword"));
-
-      if (distance < 4) {
-        if (sword) this.bot.equip(sword, "hand")
-        this.bot.lookAt(mob.position.offset(0, mob.height, 0), true)
-        this.bot.attack(mob)
-      }
-    }
-
-    const food = this.bot.inventory.items().find(item =>
-      item.name.toLowerCase().includes("golden") ||
-      item.name.toLowerCase().includes("apple")
-    );
-
-    if (food && this.bot.health < this.config.general.autoEatHealthThreshold && this.config.general.autoEatHealth) {
-      this.bot.equip(food, "hand")
-      this.bot.activateItem();
-    }
-
-    await sleep(500)
-    this.slowLoop()
-  }
-
   async followLoop() {
+    this.afkMove = false;
     while (this.currentAction.action == actions.following && !this.dead && this.bot.entity) {
       if (this.bot.entity.position.distanceTo(this.currentAction.player.position) > this.config.commands.follow.distance) {
         this.bot.lookAt(this.currentAction.player.position.offset(0, 0.5, 1), true);
@@ -386,6 +321,7 @@ class stasisBot {
 
     if (!this.currentAction.player) this.setCurrentAction(actions.idle);
     this.bot.clearControlStates();
+    this.afkMove = true;
   }
 
   async reconnect(msg, reconnectDelay = (this.mcOptions.reconnectDelay) + Math.random() * 1000) {
@@ -415,6 +351,7 @@ class stasisBot {
     const command = args.shift().toLowerCase();
 
     console.log(color.gray(`Executing ${command} args:`), args)
+    this.afkMove = false;
 
     const isInWhitelist = this.config.commands.whitelist.includes(username)
     const isInWhiterList = this.config.commands.whiterList.includes(username)
@@ -640,6 +577,8 @@ class stasisBot {
         }
       }
     }
+
+    this.afkMove = true;
   }
 
   setCurrentAction(newAction) {
@@ -680,69 +619,32 @@ class stasisBot {
     return { chests: chests.length, shulkers: shulkers.length };
   }
 
-  searchForBlock(type, radius) {
-    const position = this.bot.entity.position
-
-    for (let x = position.x - radius; x <= position.x + radius; x++) {
-      for (let y = position.y - radius; y <= position.y + radius; y++) {
-        for (let z = position.z - radius; z <= position.z + radius; z++) {
-          const block = this.bot.world.getBlock(new vec3(x, y, z));
-
-          if (block.name == type) {
-            return block;
-          }
-        }
-      }
-    }
-  }
-
-  getFaceVector(pos) {
-    if (!this.isBlockAir(pos.offset(1, 0, 0))) {
-      return new Vec3(1, 0, 0)
-    } else if (!this.isBlockAir(pos.offset(-1, 0, 0))) {
-      return new Vec3(-1, 0, 0)
-    } else if (!this.isBlockAir(pos.offset(0, 0, 1))) {
-      return new Vec3(0, 0, 1)
-    } else if (!this.isBlockAir(pos.offset(0, 0, -1))) {
-      return new Vec3(0, 0, -1)
-    } else if (!this.isBlockAir(pos.offset(0, 1, 0))) {
-      return new Vec3(0, 1, 0)
-    } else if (!this.isBlockAir(pos.offset(0, -1, 0))) {
-      return new Vec3(0, -1, 0)
-    } else {
-      return new Vec3(0, -1, 0)
-    }
-  }
-
   async randomMovement() {
-    if (!this.bot || !this.bot.entity) {
-      await sleep(10)
-      this.randomMovement()
-      return;
-    } else if (this.status !== online) return;
+    while (this.status == online) {
+      if (this.bot && this.bot.entity && this.afkMove) {
+        this.bot.setControlState("forward", true);
+        this.bot.setControlState("sprint", getRandomBoolean());
+        this.bot.setControlState("jump", getRandomBoolean());
 
-    this.bot.setControlState("forward", true);
-    this.bot.setControlState("sprint", getRandomBoolean());
-    this.bot.setControlState("jump", getRandomBoolean());
+        this.bot.look(randomInt(90), randomInt(360));
 
-    this.bot.look(randomInt(90), randomInt(360));
+        const moveTime = randomInt(3000);
 
-    const moveTime = randomInt(3000);
+        await sleep(moveTime);
 
-    await sleep(moveTime)
-    if (!this.bot || !this.bot.entity) {
-      await sleep(10)
-      this.randomMovement()
-      return;
+        if (!this.bot || !this.bot.entity) {
+          await sleep(10)
+          continue;
+        }
+
+        this.bot.setControlState("forward", false);
+        this.bot.setControlState("sprint", false);
+        this.bot.setControlState("jump", false);
+        this.bot.swingArm();
+
+        await sleep(1);
+      } else await sleep(10)
     }
-
-    this.bot.setControlState("forward", false);
-    this.bot.setControlState("sprint", false);
-    this.bot.setControlState("jump", false);
-    this.bot.swingArm();
-
-    await sleep(1)
-    this.randomMovement()
   }
 }
 
