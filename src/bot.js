@@ -156,10 +156,6 @@ class stasisBot {
       this.bot.on("autoeat_finished", (item, offhand) => {
         console.log(color.green(`[${this.mcOptions.username}] Finished eating ${item.name} in ${offhand ? "offhand" : "hand"}`))
       });
-
-      this.bot.autoEat.on("eatFail", (error) => {
-        console.log(color.red("Eating failed:"), error);
-      });
     }
 
     this.bot.on("chat", async (username, msg) => {
