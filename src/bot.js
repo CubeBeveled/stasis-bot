@@ -148,17 +148,19 @@ class stasisBot {
       }
     });
 
-    this.bot.on("autoeat_started", (item, offhand) => {
-      console.log(color.green(`[${this.mcOptions.username}] Eating ${item.name} in ${offhand ? "offhand" : "hand"}`))
-    });
+    if (this.config.general.autoEat) {
+      this.bot.on("autoeat_started", (item, offhand) => {
+        console.log(color.green(`[${this.mcOptions.username}] Eating ${item.name} in ${offhand ? "offhand" : "hand"}`))
+      });
 
-    this.bot.on("autoeat_finished", (item, offhand) => {
-      console.log(color.green(`[${this.mcOptions.username}] Finished eating ${item.name} in ${offhand ? "offhand" : "hand"}`))
-    });
+      this.bot.on("autoeat_finished", (item, offhand) => {
+        console.log(color.green(`[${this.mcOptions.username}] Finished eating ${item.name} in ${offhand ? "offhand" : "hand"}`))
+      });
 
-    this.bot.autoEat.on("eatFail", (error) => {
-      console.log(color.red("Eating failed:"), error);
-    });
+      this.bot.autoEat.on("eatFail", (error) => {
+        console.log(color.red("Eating failed:"), error);
+      });
+    }
 
     this.bot.on("chat", async (username, msg) => {
       console.log(color.yellow(`${username}: ${msg}`))
