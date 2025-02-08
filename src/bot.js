@@ -1,6 +1,6 @@
 const mineflayer = require("mineflayer");
+const { loader } = require("mineflayer-auto-eat");
 const { randomInt } = require("crypto");
-const { Vec3 } = require("vec3");
 const color = require("colors");
 const vec3 = require("vec3");
 const fs = require("fs");
@@ -60,6 +60,36 @@ class stasisBot {
     this.bot.on("end", (reason) => this.reconnect(color.yellow(`[${this.mcOptions.username}] Connection ended: `) + reason));
     this.bot.on("kicked", (reason) => this.reconnect(color.yellow(`[${this.mcOptions.username}] Kicked: `) + reason));
 
+    this.bot.on("spawn", async () => {
+      this.spawned++
+
+      console.log(color.green(`${this.mcOptions.username} spawned (${this.bot._client.socket._host}) [${this.spawned}]`));
+
+      if (this.spawned == 1) {
+        await sleep(1000);
+        if (this.mcOptions.is6b6t) this.bot.setControlState("forward", true);
+      }
+
+      if (this.spawned == 2) {
+        this.status = online;
+        if (this.mcOptions.is6b6t) this.bot.setControlState("forward", false);
+        if (this.config.general.autoEat) {
+          this.bot.loadPlugin(loader);
+          this.bot.autoEat.enableAuto();
+        }
+
+        if (this.config.general.afkMovement) {
+          this.randomMovement()
+        }
+
+        this.dead = false;
+      }
+
+      if (this.spawned > 2) {
+        this.dead = false
+      }
+    });
+
     this.bot.on("entitySpawn", (entity) => {
       if (entity.type == "player" && entity.username !== this.mcOptions.username) {
         console.log(color.gray(`Player ${entity.username} entered render distance.`));
@@ -118,39 +148,17 @@ class stasisBot {
       }
     });
 
-    this.bot.on("spawn", async () => {
-      this.spawned++
-
-      console.log(color.green(`${this.mcOptions.username} spawned (${this.bot._client.socket._host}) [${this.spawned}]`));
-
-      if (this.spawned == 1) {
-        await sleep(1000);
-        if (this.mcOptions.is6b6t) this.bot.setControlState("forward", true);
-      }
-
-      if (this.spawned == 2) {
-        this.status = online;
-        if (this.mcOptions.is6b6t) this.bot.setControlState("forward", false);
-
-        if (this.config.general.afkMovement) {
-          this.randomMovement()
-        }
-
-        this.dead = false;
-      }
-
-      if (this.spawned > 2) {
-        this.dead = false
-      }
-    });
-
     this.bot.on("autoeat_started", (item, offhand) => {
       console.log(color.green(`[${this.mcOptions.username}] Eating ${item.name} in ${offhand ? "offhand" : "hand"}`))
-    })
+    });
 
     this.bot.on("autoeat_finished", (item, offhand) => {
       console.log(color.green(`[${this.mcOptions.username}] Finished eating ${item.name} in ${offhand ? "offhand" : "hand"}`))
-    })
+    });
+
+    this.bot.autoEat.on("eatFail", (error) => {
+      console.log(color.red("Eating failed:"), error);
+    });
 
     this.bot.on("chat", async (username, msg) => {
       console.log(color.yellow(`${username}: ${msg}`))

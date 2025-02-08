@@ -2,8 +2,7 @@
   "general": {
     "afkMovement": false,
     "autoJump": true,
-    "autoEatHealth": true,
-    "autoEatHealthThreshold": 15
+    "autoEat": false
   },
   "commands": {
     "cmdPrefix": ":",
